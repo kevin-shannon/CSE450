@@ -1,48 +1,70 @@
+import math
+
 from graph import build_graph
 
 
 def solve(V):
-    V['S'].label = True
-    path = dfs(V['S'], [])
-    augment(path)
-
-def dfs(v, path):
-    for edge in v.forward_edges:
-        if forward_labelable(edge):
-            if edge.vertex == V['T']:
-                return path + [(edge, 'forward')]
+    while True:
+        # Reset labels
+        for key in V:
+            if key != 'S' and key != 'T':
+                for v in V[key]:
+                    v.label = None
             else:
-                edge.delta = edge.capacity - edge.flow
-                edge.vertex.label = edge
-                p = dfs(edge.vertex, path + [(edge, 'forward')])
-                if p:
-                    return p
-    for edge in v.backward_edges:
-        if backward_labelable(edge):
-            if edge.vertex == V['T']:
-                return path + [(edge, 'backward')]
+                V[key].label = None
+        V['S'].label = True
+        # if no path exists then halt; maximum flow has been achieved
+        if not dfs(V['S']):
+            return
+        # Augment
+        min_delta = math.inf
+        vertex = V['T']
+        edge = vertex.label
+        while vertex != V['S']:
+            if edge.dest == vertex:
+                min_delta = min(min_delta, edge.capacity - edge.flow)
+                vertex = edge.origin
             else:
-                edge.delta = edge.flow
-                edge.vertex.label = edge
-                p = dfs(edge.vertex, path + [(edge, 'backward')])
-                if p:
-                    return p
+                min_delta = min(min_delta, edge.flow)
+                vertex = edge.dest
+            edge = vertex.label
+        # Update flows by delta
+        vertex = V['T']
+        edge = vertex.label
+        while vertex != V['S']:
+            if edge.dest == vertex:
+                edge.flow += min_delta
+                vertex = edge.origin
+            else:
+                edge.flow -= min_delta
+                vertex = edge.dest
+            edge = vertex.label
 
+def dfs(v):
+    for edge in v.edges:
+        if labelable(v, edge):
+            if v == edge.origin:
+                edge.dest.label = edge
+                if edge.dest == V['T']:
+                    return True
+                else:
+                    p = dfs(edge.dest)
+            else:
+                edge.origin.label = edge
+                if edge.origin == V['T']:
+                    return True
+                else:
+                    p = dfs(edge.origin)
+            if p:
+                return p
 
-def augment(path):
-    delta = min(path, key=lambda x: x[0].delta)
-    for edge in path:
-        if edge[1] == 'forward':
-            edge[0].flow += delta
-        elif edge[1] == 'backward':
-            edge[0].flow -= delta
-
-def forward_labelable(edge):
-    return True if edge.vertex.label is None and edge.capacity > edge.flow else False
-
-def backward_labelable(edge):
-    return True if edge.vertex.label is None and edge.flow > 0 else False
+def labelable(v, edge):
+    if v == edge.origin:
+        return True if edge.dest.label is None and edge.capacity > edge.flow else False
+    else:
+        return True if edge.origin.label is None and edge.flow > 0 else False
 
 
 V = build_graph('../process/processed_data/itinerary.csv')
 solve(V)
+print(f"Maximum Flow: {sum([edge.flow for edge in V['T'].edges])}")
