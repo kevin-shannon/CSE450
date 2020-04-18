@@ -1,9 +1,27 @@
+'''
+File name :   ford_fulkerson.py
+Author :      Kevin Shannon
+Date :        04/18/2020
+Description : General implementation of the Ford-Fulkerson algorithm using
+              depth-first search.
+'''
+
 import math
 
 from collections.abc import Iterable
 
 
 def solve(V):
+    '''
+    The heart of Ford-Fulkerson algorithm, V must be a dictionary with 'S' as
+    the source and 'T' as the sink. The values of the dictionary may be individual
+    values or iterables.
+
+    Parameters
+    ----------
+    V : dict
+        Data structure containg vertices of the graph to be solved.
+    '''
     while True:
         # Reset labels
         for key in V:
@@ -31,6 +49,19 @@ def solve(V):
             vertex = away(vertex, edge)
 
 def dfs(u):
+    '''
+    Recursive depth-first-searh algorithm that looks for labelable vertices.
+
+    Parameters
+    ----------
+    u : Vertex
+        Current vertex being evaluated.
+
+    Returns
+    -------
+    p : bool or None
+        True only if a path to the sink was found.
+    '''
     for edge in u.edges:
         if labelable(u, edge):
             v = away(u, edge)
@@ -43,12 +74,38 @@ def dfs(u):
                 return p
 
 def away(u, edge):
+    '''
+    Parameters
+    ----------
+    u : Vertex
+        Current vertex being evaluated.
+    edge : Edge
+        Edge associated with u.
+
+    Returns
+    -------
+    Vertex
+        Vertex that is on the other side of the edge from u.
+    '''
     if u == edge.origin:
         return edge.dest
     else:
         return edge.origin
 
 def labelable(u, edge):
+    '''
+    Parameters
+    ----------
+    u : Vertex
+        Current vertex being evaluated.
+    edge : Edge
+        Edge associated with u.
+
+    Returns
+    -------
+    bool
+        True if the vertex away from u is eligible for labeling.
+    '''
     if u == edge.origin:
         return True if edge.dest.label is None and edge.capacity > edge.flow else False
     else:
