@@ -39,7 +39,7 @@ def solve(V):
         vertex = V['T']
         while vertex != V['S']:
             edge = vertex.label
-            min_delta =  min(min_delta, edge.capacity - edge.flow) if edge.dest == vertex else min(min_delta, edge.flow)
+            min_delta =  min(min_delta, edge.capacity - edge.flow if edge.dest == vertex else edge.flow)
             vertex = away(vertex, edge)
         # Update flows by delta
         vertex = V['T']
